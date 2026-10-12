@@ -1,0 +1,31 @@
+# casa — app ONLY, behind your EXISTING Caddy (the one already serving
+# other apps on ojoalprecio.com). No second Caddy here: the shared Caddy
+# reverse-proxies to this container by name over a shared Docker network.
+#
+# Setup:
+#   1) Find the Docker network your Caddy is on:
+#        docker inspect <caddy-container> \
+#          --format '{{json .NetworkSettings.Networks}}'
+#   2) Put that network name in .env as PROXY_NETWORK
+#   3) docker compose up -d
+#   4) Add to your Caddyfile:
+#        casa.ojoalprecio.com {
+#            reverse_proxy casa:80
+#        }
+#      Then: docker exec <caddy-container> caddy reload --config /etc/caddy/Caddyfile
+
+services:
+  casa:
+    image: ghcr.io/davic80/casa:${CASA_TAG:-latest}
+    restart: unless-stopped
+    expose:
+      - "80"
+    networks:
+      proxy:
+        aliases:
+          - casa
+
+networks:
+  proxy:
+    external: true
+    name: ${PROXY_NETWORK:?set PROXY_NETWORK in .env to your existing Caddy network}

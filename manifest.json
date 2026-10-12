@@ -1,0 +1,10 @@
+{
+  "name": "Calculadora de hipoteca",
+  "short_name": "Casa",
+  "description": "¿Cuánta casa me puedo permitir? Todo se calcula en tu navegador.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f4f6f5",
+  "theme_color": "#0a7d5a",
+  "icons": [{ "src": "icon.svg", "type": "image/svg+xml", "sizes": "any", "purpose": "any maskable" }]
+}

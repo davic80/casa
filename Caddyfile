@@ -1,0 +1,5 @@
+# Reverse proxy for casa. The hostname comes from CASA_HOST in .env.
+# Caddy obtains and renews the TLS certificate automatically (Let's Encrypt).
+{$CASA_HOST} {
+	reverse_proxy casa:80
+}

@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+#
+# casa — deploy / update on the server.
+#
+# Pulls the latest image published by CI to GHCR and (re)starts the stack with
+# docker compose. Defaults to docker-compose.yml (the app behind the existing
+# shared Caddy). Override the compose file with
+# CASA_COMPOSE=docker-compose.standalone.yml for the self-contained stack.
+#
+# Usage:  ./deploy.sh
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "${SCRIPT_DIR}"
+
+if [ -f .env ]; then
+  set -a
+  # shellcheck disable=SC1091
+  . ./.env
+  set +a
+fi
+
+COMPOSE_FILE="${CASA_COMPOSE:-docker-compose.yml}"
+
+echo "==> Updating repo (compose files, Caddyfile, scripts)"
+git pull --ff-only || echo "   (git pull skipped/failed; continuing with local files)"
+
+echo "==> Pulling latest image"
+docker compose -f "${COMPOSE_FILE}" pull
+
+echo "==> Restarting stack"
+docker compose -f "${COMPOSE_FILE}" up -d
+
+docker image prune -f >/dev/null || true
+echo "==> Done (${COMPOSE_FILE}). https://${CASA_HOST:-casa.ojoalprecio.com}"

@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calculadora de casa</title>
+<meta name="theme-color" content="#0a7d5a">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+  :root {
+    --bg: #f4f6f5; --card: #fff; --text: #17201c; --muted: #5f6b66; --line: #e2e7e4;
+    --accent: #0a7d5a; --ok: #1a8a4a; --warn: #c58a00; --bad: #c0392b; --info: #2f6fb3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #111614; --card: #1a211e; --text: #e8eeeb; --muted: #97a39e; --line: #2a332f;
+      --accent: #3cc497; --ok: #4cc27a; --warn: #e3b23c; --bad: #ef6b5b; --info: #6aa5e6; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 20px 16px 48px; }
+  header h1 { margin: 0 0 4px; font-size: 24px; }
+  .privacy { display: inline-block; margin: 6px 0 18px; padding: 6px 10px; border-radius: 8px;
+    background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); font-weight: 600; font-size: 13px; }
+  .grid { display: grid; grid-template-columns: 340px 1fr; gap: 18px; align-items: start; }
+  @media (max-width: 820px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+  .card h2 { margin: 0 0 12px; font-size: 15px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
+  input[type=number], select { width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px;
+    background: var(--bg); color: var(--text); font: inherit; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .seg { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .seg button { flex: 1; padding: 8px; border: 0; background: var(--bg); color: var(--text); font: inherit; cursor: pointer; }
+  .seg button.on { background: var(--accent); color: #fff; font-weight: 600; }
+  .check { display: flex; gap: 8px; align-items: center; margin-top: 10px; font-size: 14px; color: var(--text); }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .sliders { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+  @media (max-width: 560px) { .sliders { grid-template-columns: 1fr; } }
+  .slider .top { display: flex; justify-content: space-between; align-items: baseline; }
+  .slider .val { font-size: 22px; font-weight: 700; color: var(--accent); }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  .scale { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+  .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 18px; }
+  @media (max-width: 560px) { .kpis { grid-template-columns: 1fr; } }
+  .kpi { padding: 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); }
+  .kpi .t { font-size: 12px; color: var(--muted); }
+  .kpi .v { font-size: 24px; font-weight: 750; margin-top: 2px; }
+  .kpi .s { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .ok { color: var(--ok); } .warn { color: var(--warn); } .bad { color: var(--bad); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  td, th { padding: 7px 4px; border-bottom: 1px solid var(--line); text-align: right; }
+  td:first-child, th:first-child { text-align: left; }
+  th { font-size: 12px; color: var(--muted); font-weight: 600; }
+  tr.total td { font-weight: 700; border-bottom: 0; }
+  tr.hl td { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+  @media (max-width: 820px) { .two { grid-template-columns: 1fr; } }
+  .bar { height: 14px; border-radius: 7px; background: linear-gradient(90deg, var(--ok) 0 60%, var(--warn) 60% 90%, var(--bad) 90%); position: relative; margin: 26px 0 6px; }
+  .bar .mark { position: absolute; top: -22px; transform: translateX(-50%); font-size: 12px; font-weight: 700; white-space: nowrap; }
+  .bar .mark::after { content: ""; position: absolute; left: 50%; top: 18px; width: 2px; height: 22px; background: var(--text); }
+  .msg { padding: 10px 12px; border-radius: 10px; margin-top: 10px; font-size: 14px; border-left: 4px solid; background: var(--bg); }
+  .msg.ok { border-color: var(--ok); } .msg.warn { border-color: var(--warn); } .msg.bad { border-color: var(--bad); }
+  .msg { color: var(--text); }
+  footer { margin-top: 24px; font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🏠 ¿Cuánta casa me puedo permitir?</h1>
+    <div class="privacy">🔒 100% local: todo se calcula en tu navegador, ningún dato sale de este dispositivo.</div>
+  </header>
+
+  <div class="grid">
+    <!-- ======== Preguntas ======== -->
+    <section class="card">
+      <h2>Tus datos</h2>
+      <label for="precio">Precio estimado de compra (€)</label>
+      <input id="precio" type="number" min="0" step="5000" value="300000">
+
+      <label for="ingresos">Ingresos netos mensuales (€)</label>
+      <input id="ingresos" type="number" min="0" step="100" value="3500">
+      <div class="hint">Suma de los titulares, en 12 pagas.</div>
+
+      <label for="prestamos">Gastos mensuales en préstamos (€)</label>
+      <input id="prestamos" type="number" min="0" step="50" value="0">
+      <div class="hint">Coche, consumo, tarjetas… (no el alquiler)</div>
+
+      <label for="ahorro">Ahorro que puedes aportar (€)</label>
+      <input id="ahorro" type="number" min="0" step="1000" value="60000">
+
+      <label for="edad">Edad (del titular mayor)</label>
+      <input id="edad" type="number" min="18" max="75" value="35">
+
+      <label for="ccaa">Comunidad de la vivienda</label>
+      <select id="ccaa"></select>
+
+      <label>Tipo de vivienda</label>
+      <div class="seg" id="tipo">
+        <button data-v="segunda" class="on">Segunda mano</button>
+        <button data-v="nueva">Obra nueva</button>
+      </div>
+      <label class="check" id="fnWrap"><input type="checkbox" id="fn"> Familia numerosa</label>
+
+      <div class="row2">
+        <div>
+          <label for="impuesto">Impuesto (%)</label>
+          <input id="impuesto" type="number" min="0" max="15" step="0.1">
+        </div>
+        <div>
+          <label for="gastos">Gastos (%)</label>
+          <input id="gastos" type="number" min="0" max="5" step="0.1" value="1.5">
+        </div>
+      </div>
+      <div class="hint" id="impHint"></div>
+    </section>
+
+    <!-- ======== Panel ======== -->
+    <section>
+      <div class="card sliders">
+        <div class="slider">
+          <div class="top"><span>Tipo de interés</span><span class="val" id="tipoVal"></span></div>
+          <input id="interes" type="range" min="1.5" max="5" step="0.05" value="3">
+          <div class="scale"><span>1,5%</span><span>3%</span><span>5%</span></div>
+        </div>
+        <div class="slider">
+          <div class="top"><span>Plazo</span><span class="val" id="plazoVal"></span></div>
+          <input id="plazo" type="range" min="10" max="35" step="1" value="30">
+          <div class="scale"><span>10 años</span><span>20</span><span>35 años</span></div>
+        </div>
+        <div class="slider" style="grid-column:1/-1">
+          <div class="top"><span>Colchón que te quieres guardar</span><span class="val" id="colchonVal"></span></div>
+          <input id="colchon" type="range" min="0" max="10000000" step="500" value="10000">
+          <div class="scale"><span>0 € (aportar todo)</span><span id="colchonMax"></span></div>
+          <div class="hint" id="colchonHint"></div>
+        </div>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi"><div class="t">Necesitas ahorrado</div><div class="v" id="kNecesitas"></div><div class="s" id="kNecesitasS"></div></div>
+        <div class="kpi"><div class="t">Hipoteca a pedir</div><div class="v" id="kHipoteca"></div><div class="s" id="kHipotecaS"></div></div>
+        <div class="kpi"><div class="t">Cuota mensual</div><div class="v" id="kCuota"></div><div class="s" id="kCuotaS"></div></div>
+      </div>
+
+      <div class="two">
+        <div class="card">
+          <h2>Cuánto necesitas de entrada</h2>
+          <table id="tEntrada"></table>
+          <div id="mAhorro"></div>
+        </div>
+        <div class="card">
+          <h2>Nivel de endeudamiento</h2>
+          <div class="bar"><div class="mark" id="barMark"></div></div>
+          <div class="scale" style="position:relative;height:16px"><span style="position:absolute;left:0">0%</span><span style="position:absolute;left:40%;transform:translateX(-50%)">20%</span><span style="position:absolute;left:50%;transform:translateX(-50%)">25%</span><span style="position:absolute;left:66.6%;transform:translateX(-50%)">33%</span><span style="position:absolute;right:0">50%</span></div>
+          <div id="mEndeud"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:18px">
+        <h2>Cuota máxima que te dejaría un banco</h2>
+        <table id="tNiveles"></table>
+        <div class="hint">(Ingresos − préstamos) × %. Hipoteca y precio máximos calculados con el tipo y plazo elegidos, financiando el 80% y con tu ahorro cubriendo el resto + impuestos + gastos.</div>
+      </div>
+
+      <div class="card">
+        <h2>Plazo según tu edad</h2>
+        <table id="tEdad"></table>
+        <div id="mEdad"></div>
+      </div>
+    </section>
+  </div>
+
+  <footer>Estimación orientativa, no es asesoramiento financiero. Los tipos de ITP son los generales aproximados de cada comunidad; hay reducciones (jóvenes, familia numerosa, vivienda protegida…) — ajusta el % si te aplica otro.</footer>
+</div>
+
+<script>
+// ITP general (vivienda usada) aprox. por comunidad; editable en la UI.
+// fn = tipo reducido para familia numerosa cuando se conoce.
+const CCAA = [
+  ["Madrid", 6, 4], ["Andalucía", 7], ["Aragón", 8], ["Asturias", 8], ["Baleares", 8],
+  ["Canarias", 6.5], ["Cantabria", 9], ["Castilla-La Mancha", 9], ["Castilla y León", 8],
+  ["Cataluña", 10], ["Comunidad Valenciana", 10], ["Extremadura", 8], ["Galicia", 8],
+  ["La Rioja", 7], ["Murcia", 8], ["Navarra", 6], ["País Vasco", 4], ["Ceuta", 6], ["Melilla", 6],
+];
+const $ = id => document.getElementById(id);
+const eur = n => isFinite(n) ? Math.round(n).toLocaleString("es-ES") + " €" : "—";
+const pct = (n, d = 1) => n.toLocaleString("es-ES", { maximumFractionDigits: d }) + "%";
+const num = id => Math.max(0, parseFloat($(id).value) || 0);
+
+let tipoViv = "segunda";
+$("ccaa").innerHTML = CCAA.map((c, i) => `<option value="${i}">${c[0]}</option>`).join("");
+
+// Cuota francesa
+function cuota(P, tasaAnual, anos) {
+  const r = tasaAnual / 100 / 12, n = anos * 12;
+  return r === 0 ? P / n : P * r / (1 - Math.pow(1 + r, -n));
+}
+function capital(C, tasaAnual, anos) {
+  const r = tasaAnual / 100 / 12, n = anos * 12;
+  return r === 0 ? C * n : C * (1 - Math.pow(1 + r, -n)) / r;
+}
+
+function impuestoDefecto() {
+  const c = CCAA[$("ccaa").value];
+  if (tipoViv === "nueva") return c[0] === "Canarias" ? 6.5 : 10; // IGIC en Canarias
+  return $("fn").checked && c[2] != null ? c[2] : c[1];
+}
+function syncImpuesto() {
+  const c = CCAA[$("ccaa").value];
+  $("impuesto").value = impuestoDefecto();
+  $("fnWrap").style.display = tipoViv === "segunda" ? "" : "none";
+  $("impHint").textContent = tipoViv === "nueva"
+    ? (c[0] === "Canarias" ? "IGIC 6,5% (obra nueva en Canarias)." : "IVA 10% (obra nueva). Gastos incluyen notaría, registro, AJD, tasación…")
+    : `ITP ${c[0]}${$("fn").checked && c[2] == null ? " (sin reducción conocida: ajústalo)" : ""}. Gastos: notaría, registro, gestoría, tasación.`;
+}
+
+function calc() {
+  const ingresos = num("ingresos"), prestamos = num("prestamos"), ahorro = num("ahorro");
+  const edad = num("edad"), precio = num("precio");
+  const imp = num("impuesto") / 100, gas = num("gastos") / 100;
+  const tasa = parseFloat($("interes").value), plazoSel = parseInt($("plazo").value);
+  $("tipoVal").textContent = pct(tasa, 2);
+
+  // Plazo limitado por la edad (bancos: hasta 70-75 años al terminar)
+  const max75 = Math.max(0, Math.min(35, 75 - edad)), max70 = Math.max(0, Math.min(35, 70 - edad));
+  const plazo = Math.min(plazoSel, max75);
+  $("plazoVal").textContent = plazo + " años" + (plazo < plazoSel ? " ⚠" : "");
+
+  const neto = Math.max(0, ingresos - prestamos);
+
+  // Entrada
+  const entrada = precio * 0.2, impuesto = precio * imp, gastos = precio * gas;
+  const necesitas = entrada + impuesto + gastos;
+  // Colchón: lo que sobra del ahorro y no te quieres guardar se aporta y baja la hipoteca
+  const sobra = Math.max(0, ahorro - necesitas);
+  const sl = $("colchon"), maxC = Math.ceil(sobra / 500) * 500;
+  const prevMax = parseFloat(sl.max) || 0, wasMax = parseFloat(sl.value) >= prevMax && prevMax > 0;
+  sl.max = maxC;
+  if (wasMax) sl.value = maxC;
+  const colchon = Math.min(sobra, parseFloat(sl.value) || 0);
+  const extra = sobra - colchon;
+  const hipoteca = Math.max(0, precio * 0.8 - extra);
+  $("colchonVal").textContent = eur(colchon);
+  $("colchonMax").textContent = eur(sobra) + " (no aportar nada extra)";
+  sl.disabled = sobra <= 0;
+  $("colchonHint").textContent = sobra <= 0 ? "No te sobra ahorro tras la entrada, impuestos y gastos."
+    : extra > 0 ? `Aportas ${eur(extra)} extra: la hipoteca baja a ${eur(hipoteca)} (${pct(hipoteca / precio * 100)} del precio).`
+    : "No aportas nada extra: se financia el 80%.";
+  const cuotaM = plazo > 0 ? cuota(hipoteca, tasa, plazo) : NaN;
+  const ratio = neto > 0 ? cuotaM / neto : Infinity;
+
+  $("kNecesitas").textContent = eur(necesitas);
+  $("kNecesitasS").innerHTML = ahorro >= necesitas
+    ? `<span class="ok">Te sobran ${eur(ahorro - necesitas)}</span>`
+    : `<span class="bad">Te faltan ${eur(necesitas - ahorro)}</span>`;
+  $("kHipoteca").textContent = eur(hipoteca);
+  $("kHipotecaS").textContent = `${pct(precio ? hipoteca / precio * 100 : 0)} del precio · ${plazo} años al ${pct(tasa, 2)}`;
+  $("kCuota").textContent = eur(cuotaM);
+  const cls = ratio <= 0.25 ? "ok" : ratio <= 0.333 ? "warn" : "bad";
+  $("kCuota").className = "v " + cls;
+  $("kCuotaS").textContent = isFinite(ratio) ? `${pct(ratio * 100)} de tus ingresos libres` : "";
+
+  const imLabel = tipoViv === "nueva" ? (CCAA[$("ccaa").value][0] === "Canarias" ? "IGIC" : "IVA") : "ITP";
+  $("tEntrada").innerHTML = `
+    <tr><td>Entrada (20%)</td><td>${eur(entrada)}</td></tr>
+    <tr><td>${imLabel} (${pct(imp * 100)})</td><td>${eur(impuesto)}</td></tr>
+    <tr><td>Gastos (${pct(gas * 100)})</td><td>${eur(gastos)}</td></tr>
+    <tr class="total"><td>Total necesario</td><td>${eur(necesitas)}</td></tr>
+    <tr><td>Tu ahorro</td><td>${eur(ahorro)}</td></tr>
+    ${sobra > 0 ? `<tr><td>Aportación extra (baja hipoteca)</td><td>${eur(extra)}</td></tr><tr><td>Colchón</td><td>${eur(colchon)}</td></tr>` : ""}`;
+  $("mAhorro").innerHTML = ahorro >= necesitas
+    ? `<div class="msg ok">Tu ahorro cubre la entrada, impuestos y gastos. Del sobrante, ${eur(extra)} van a bajar la hipoteca y ${eur(colchon)} quedan de colchón (ajústalo con el slider).</div>`
+    : `<div class="msg bad">Te faltan <b>${eur(necesitas - ahorro)}</b>. Los bancos casi siempre financian como máximo el 80% del valor de tasación.</div>`;
+
+  // Barra endeudamiento (escala 0-50%)
+  const pos = Math.min(100, (isFinite(ratio) ? ratio : 1) / 0.5 * 100);
+  $("barMark").style.left = pos + "%";
+  $("barMark").textContent = isFinite(ratio) ? pct(ratio * 100) : "—";
+  document.querySelector(".bar").style.background =
+    "linear-gradient(90deg, var(--ok) 0 40%, var(--warn) 40% 66.6%, var(--bad) 66.6%)";
+  const msgE = ratio <= 0.20 ? ["ok", "Muy holgado: la hipoteca será fácil de conseguir."]
+    : ratio <= 0.25 ? ["ok", "Fácil de conseguir: endeudamiento cómodo."]
+    : ratio <= 0.30 ? ["warn", "En el tope habitual de los bancos."]
+    : ratio <= 0.333 ? ["warn", "Al límite: es lo máximo que suelen aceptar (33%)."]
+    : ["bad", "Por encima del 33%: la mayoría de bancos no lo aprobarán. Baja el precio, aporta más o alarga el plazo."];
+  $("mEndeud").innerHTML = `<div class="msg ${msgE[0]}">${msgE[1]}</div>`;
+
+  // Niveles
+  const costeSobre = 0.2 + imp + gas; // ahorro necesario por € de precio
+  const precioPorAhorro = ahorro / costeSobre;
+  const niveles = [[0.20, "Muy fácil", "ok"], [0.25, "Fácil", "ok"], [0.30, "Tope habitual", "warn"], [0.333, "Máximo banco", "bad"]];
+  $("tNiveles").innerHTML = `<tr><th>Nivel</th><th>Cuota máx.</th><th>Hipoteca máx.</th><th>Precio máx.</th></tr>` +
+    niveles.map(([p, n, c]) => {
+      const cm = neto * p, hm = plazo > 0 ? capital(cm, tasa, plazo) : 0;
+      const pm = Math.min(hm / 0.8, precioPorAhorro);
+      const hl = cuotaM <= cm && (niveles.find(x => cuotaM <= neto * x[0]) || [])[0] === p;
+      return `<tr class="${hl ? "hl" : ""}"><td><span class="${c}">●</span> ${n} (${pct(p * 100)})</td><td>${eur(cm)}</td><td>${eur(hm)}</td><td>${eur(pm)}${pm === precioPorAhorro ? " <span class='hint'>(limita ahorro)</span>" : ""}</td></tr>`;
+    }).join("");
+
+  // Edad
+  const filaEdad = (lim, mx) => {
+    const c = mx > 0 ? cuota(hipoteca, tasa, Math.min(mx, plazoSel)) : NaN;
+    return `<tr><td>Banco que financia hasta los ${lim} años</td><td>${mx > 0 ? "hasta " + mx + " años" : "no financia"}</td><td>${eur(c)}/mes</td></tr>`;
+  };
+  $("tEdad").innerHTML = `<tr><th>Límite</th><th>Plazo máx.</th><th>Cuota (plazo elegido o máx.)</th></tr>` +
+    filaEdad(70, max70) + filaEdad(75, max75);
+  $("mEdad").innerHTML = plazo < plazoSel
+    ? `<div class="msg warn">Con ${edad} años ningún banco te dará ${plazoSel} años: el plazo se ha recortado a ${plazo}.</div>`
+    : plazoSel > max70
+    ? `<div class="msg warn">${plazoSel} años solo con bancos que lleguen a 75. Con los de 70, máximo ${max70} años.</div>`
+    : `<div class="msg ok">Plazo de ${plazoSel} años válido en la mayoría de bancos.</div>`;
+}
+
+document.querySelectorAll("#tipo button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("#tipo button").forEach(x => x.classList.toggle("on", x === b));
+  tipoViv = b.dataset.v; syncImpuesto(); calc();
+});
+$("ccaa").onchange = $("fn").onchange = () => { syncImpuesto(); calc(); };
+document.querySelectorAll("input").forEach(i => i.addEventListener("input", calc));
+syncImpuesto(); calc();
+</script>
+</body>
+</html>
